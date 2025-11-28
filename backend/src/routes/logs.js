@@ -1,8 +1,9 @@
-// src/routes/logs.js
 const router = require('express').Router();
-const ctrl = require('../controllers/logsController');
 const { authMiddleware, requireRole } = require('../middlewares/authMiddleware');
+const { getAllLogs } = require('../controllers/logsController');
 
-router.get('/', authMiddleware, requireRole('admin'), ctrl.list);
+router.use(authMiddleware, requireRole('admin'));
+
+router.get('/', getAllLogs);
 
 module.exports = router;

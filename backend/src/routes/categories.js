@@ -1,11 +1,18 @@
-// src/routes/categories.js
 const router = require('express').Router();
-const ctrl = require('../controllers/categoriesController');
 const { authMiddleware, requireRole } = require('../middlewares/authMiddleware');
+const {
+  getAllCategories,
+  getCategoryById,
+  createCategory,
+  updateCategory,
+  deleteCategory
+} = require('../controllers/categoriesController');
 
-router.get('/', ctrl.list);
-router.post('/', authMiddleware, requireRole('admin'), ctrl.create);
-router.put('/:id', authMiddleware, requireRole('admin'), ctrl.update);
-router.delete('/:id', authMiddleware, requireRole('admin'), ctrl.remove);
+router.get('/', getAllCategories);
+router.get('/:id', getCategoryById);
+
+router.post('/', authMiddleware, requireRole('admin'), createCategory);
+router.put('/:id', authMiddleware, requireRole('admin'), updateCategory);
+router.delete('/:id', authMiddleware, requireRole('admin'), deleteCategory);
 
 module.exports = router;

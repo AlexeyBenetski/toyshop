@@ -1,11 +1,13 @@
-// src/routes/users.js
 const router = require('express').Router();
-const ctrl = require('../controllers/usersController');
+const { registerUser, loginUser, getAllUsers, getUserById } = require('../controllers/usersController');
 const { authMiddleware, requireRole } = require('../middlewares/authMiddleware');
 
-router.get('/', authMiddleware, requireRole('admin'), ctrl.list);
-router.get('/:id', authMiddleware, requireRole('admin'), ctrl.getOne);
-router.put('/:id', authMiddleware, requireRole('admin'), ctrl.update);
-router.delete('/:id', authMiddleware, requireRole('admin'), ctrl.remove);
+// Регистрация и логин
+router.post('/register', registerUser);
+router.post('/login', loginUser);
+
+// CRUD (только для admin)
+router.get('/', authMiddleware, requireRole('admin'), getAllUsers);
+router.get('/:id', authMiddleware, requireRole('admin'), getUserById);
 
 module.exports = router;

@@ -1,15 +1,20 @@
-// src/routes/products.js
 const router = require('express').Router();
-const ctrl = require('../controllers/productsController');
 const { authMiddleware, requireRole } = require('../middlewares/authMiddleware');
+const {
+  getAllProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  deleteProduct
+} = require('../controllers/productsController');
 
-// Public list + get
-router.get('/', ctrl.list);
-router.get('/:id', ctrl.getOne);
+// Публичные маршруты
+router.get('/', getAllProducts);
+router.get('/:id', getProductById);
 
-// Protected admin routes
-router.post('/', authMiddleware, requireRole('admin'), ctrl.create);
-router.put('/:id', authMiddleware, requireRole('admin'), ctrl.update);
-router.delete('/:id', authMiddleware, requireRole('admin'), ctrl.remove);
+// Admin только
+router.post('/', authMiddleware, requireRole('admin'), createProduct);
+router.put('/:id', authMiddleware, requireRole('admin'), updateProduct);
+router.delete('/:id', authMiddleware, requireRole('admin'), deleteProduct);
 
 module.exports = router;
