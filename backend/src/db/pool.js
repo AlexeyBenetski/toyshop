@@ -5,7 +5,7 @@ const pool = new Pool({
   user: process.env.PGUSER,
   host: process.env.PGHOST,
   database: process.env.PGDATABASE,
-  password: process.env.PGPASSWORD,
+  password: String(process.env.PGPASSWORD), // на всякий случай конвертируем в строку
   port: process.env.PGPORT
 });
 
