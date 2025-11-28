@@ -1,35 +1,46 @@
-// src/index.js
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const app = express();
-const path = require('path');
 
-// middlewares
+// Middleware
+app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// static uploads
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Static folder for uploaded images
+app.use('/uploads', express.static('backend/src/uploads'));
 
-// routes
-const authRoutes = require('./routes/auth');
-const prodRoutes = require('./routes/products');
-const catRoutes = require('./routes/categories');
+// Routes
+const userRoutes = require('./routes/users');
+const productRoutes = require('./routes/products');
+const categoryRoutes = require('./routes/categories');
 const cartRoutes = require('./routes/cart');
 const orderRoutes = require('./routes/orders');
 const logRoutes = require('./routes/logs');
-const userRoutes = require('./routes/users');
+const productImagesRoutes = require('./routes/productImages');
 
-app.use('/api/auth', authRoutes);
-app.use('/api/products', prodRoutes);
-app.use('/api/categories', catRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/categories', categoryRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/logs', logRoutes);
-app.use('/api/users', userRoutes);
+app.use('/api/product-images', productImagesRoutes);
 
-// health
-app.get('/api/ping', (req, res) => res.json({ ok: true, time: new Date() }));
+// 404 handler
+app.use((req, res, next) => {
+  res.status(404).json({ message: 'Route not found' });
+});
 
+// Error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Internal server error' });
+});
+
+// Start server
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server started on port ${PORT}`);
+});
