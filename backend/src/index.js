@@ -1,23 +1,13 @@
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
-dotenv.config();
+const path = require('path');
+require('dotenv').config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-const path = require('path');
 
-// Раздаём статические файлы фронтенда
-app.use(express.static(path.join(__dirname, '../../frontend')));
-
-// Маршрут по умолчанию на index.html
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../../frontend/index.html'));
-});
-
-
-// --- подключаем роуты ---
+// Подключаем маршруты
 const usersRouter = require('./routes/users');
 const productsRouter = require('./routes/products');
 const categoriesRouter = require('./routes/categories');
@@ -34,13 +24,15 @@ app.use('/api/orders', ordersRouter);
 app.use('/api/logs', logsRouter);
 app.use('/api/product-images', productImagesRouter);
 
-// --- 404 handler ---
-app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found' });
+// Статика фронтенда
+app.use(express.static(path.join(__dirname, '../../frontend')));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../frontend/index.html'));
 });
 
-// --- запуск сервера ---
-const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// 404 для остальных маршрутов
+app.use((req,res)=>res.status(404).json({message:'Route not found'}));
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, ()=>console.log(`Server running on ${PORT}`));
