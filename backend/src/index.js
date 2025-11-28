@@ -6,6 +6,16 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
+const path = require('path');
+
+// Раздаём статические файлы фронтенда
+app.use(express.static(path.join(__dirname, '../../frontend')));
+
+// Маршрут по умолчанию на index.html
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../../frontend/index.html'));
+});
+
 
 // --- подключаем роуты ---
 const usersRouter = require('./routes/users');
@@ -23,11 +33,6 @@ app.use('/api/cart', cartRouter);
 app.use('/api/orders', ordersRouter);
 app.use('/api/logs', logsRouter);
 app.use('/api/product-images', productImagesRouter);
-
-// --- корневой маршрут ---
-app.get('/', (req, res) => {
-  res.json({ message: 'Welcome to ToyShop API' });
-});
 
 // --- 404 handler ---
 app.use((req, res) => {
