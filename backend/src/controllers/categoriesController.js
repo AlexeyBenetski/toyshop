@@ -1,31 +1,30 @@
+const pool = require('../db/pool');
 
-// src/controllers/categoriesController.js
-const Categories = require('../models/categories');
-const Logs = require('../models/logs');
+async function getAllCategories(req,res){
+  const result = await pool.query('SELECT * FROM categories ORDER BY id');
+  res.json(result.rows);
+}
 
-module.exports = {
-  async list(req, res) {
-    const rows = await Categories.getAll();
-    res.json(rows);
-  },
+async function getCategoryById(req,res){
+  const result = await pool.query('SELECT * FROM categories WHERE id=$1',[req.params.id]);
+  res.json(result.rows[0]);
+}
 
-  async create(req, res) {
-    const created = await Categories.create(req.body);
-    if (req.user) await Logs.write(req.user.id, 'create_category', JSON.stringify({ id: created.id }));
-    res.json(created);
-  },
+async function createCategory(req,res){
+  const { name } = req.body;
+  const result = await pool.query('INSERT INTO categories (name) VALUES ($1) RETURNING *',[name]);
+  res.status(201).json(result.rows[0]);
+}
 
-  async update(req, res) {
-    const id = Number(req.params.id);
-    const upd = await Categories.update(id, req.body);
-    if (req.user) await Logs.write(req.user.id, 'update_category', JSON.stringify({ id }));
-    res.json(upd);
-  },
+async function updateCategory(req,res){
+  const { name } = req.body;
+  const result = await pool.query('UPDATE categories SET name=$1 WHERE id=$2 RETURNING *',[name,req.params.id]);
+  res.json(result.rows[0]);
+}
 
-  async remove(req, res) {
-    const id = Number(req.params.id);
-    await Categories.remove(id);
-    if (req.user) await Logs.write(req.user.id, 'delete_category', JSON.stringify({ id }));
-    res.json({ success: true });
-  }
-};
+async function deleteCategory(req,res){
+  await pool.query('DELETE FROM categories WHERE id=$1',[req.params.id]);
+  res.json({message:'Category deleted'});
+}
+
+module.exports = { getAllCategories,getCategoryById,createCategory,updateCategory,deleteCategory };

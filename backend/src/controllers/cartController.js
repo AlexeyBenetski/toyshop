@@ -1,36 +1,36 @@
-// src/controllers/cartController.js
-const Cart = require('../models/cart');
-const Logs = require('../models/logs');
+const pool = require('../db/pool');
 
-module.exports = {
-  async get(req, res) {
-    const userId = req.user.id;
-    const cart = await Cart.getCart(userId);
-    res.json(cart);
-  },
+async function getCart(req,res){
+  const result = await pool.query('SELECT * FROM cart_items WHERE user_id=$1',[req.user.id]);
+  res.json(result.rows);
+}
 
-  async add(req, res) {
-    const userId = req.user.id;
-    const { productId, quantity } = req.body;
-    const item = await Cart.addItem(userId, productId, quantity || 1);
-    await Logs.write(userId, 'cart_add', JSON.stringify(item));
-    res.json(item);
-  },
+async function addItemToCart(req,res){
+  const { product_id, quantity } = req.body;
+  const result = await pool.query(
+    'INSERT INTO cart_items (user_id,product_id,quantity) VALUES ($1,$2,$3) RETURNING *',
+    [req.user.id, product_id, quantity]
+  );
+  res.status(201).json(result.rows[0]);
+}
 
-  async update(req, res) {
-    const userId = req.user.id;
-    const { productId } = req.params;
-    const { quantity } = req.body;
-    const item = await Cart.updateItem(userId, productId, Number(quantity));
-    await Logs.write(userId, 'cart_update', JSON.stringify({ productId, quantity }));
-    res.json(item);
-  },
+async function updateCartItem(req,res){
+  const { quantity } = req.body;
+  const result = await pool.query(
+    'UPDATE cart_items SET quantity=$1 WHERE id=$2 AND user_id=$3 RETURNING *',
+    [quantity, req.params.itemId, req.user.id]
+  );
+  res.json(result.rows[0]);
+}
 
-  async remove(req, res) {
-    const userId = req.user.id;
-    const { productId } = req.params;
-    await Cart.removeItem(userId, productId);
-    await Logs.write(userId, 'cart_remove', JSON.stringify({ productId }));
-    res.json({ success: true });
-  }
-};
+async function removeCartItem(req,res){
+  await pool.query('DELETE FROM cart_items WHERE id=$1 AND user_id=$2',[req.params.itemId,req.user.id]);
+  res.json({message:'Cart item removed'});
+}
+
+async function clearCart(req,res){
+  await pool.query('DELETE FROM cart_items WHERE user_id=$1',[req.user.id]);
+  res.json({message:'Cart cleared'});
+}
+
+module.exports = { getCart, addItemToCart, updateCartItem, removeCartItem, clearCart };

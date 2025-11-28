@@ -1,9 +1,8 @@
-// src/controllers/logsController.js
-const Logs = require('../models/logs');
+const pool = require('../db/pool');
 
-module.exports = {
-  async list(req, res) {
-    const rows = await Logs.listAll();
-    res.json(rows);
-  }
-};
+async function getAllLogs(req,res){
+  const result = await pool.query('SELECT * FROM logs ORDER BY id DESC');
+  res.json(result.rows);
+}
+
+module.exports = { getAllLogs };
