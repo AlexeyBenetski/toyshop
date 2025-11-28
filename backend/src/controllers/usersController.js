@@ -1,32 +1,52 @@
-// src/controllers/usersController.js
-const Users = require('../models/users');
-const Logs = require('../models/logs');
+const pool = require('../db/pool');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
-module.exports = {
-  async list(req, res) {
-    const rows = await Users.listAll();
-    res.json(rows);
-  },
+// Регистрация пользователя
+async function registerUser(req, res) {
+  try {
+    const { email, password, name } = req.body;
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-  async getOne(req, res) {
-    const id = Number(req.params.id);
-    const user = await Users.findById(id);
-    if (!user) return res.status(404).json({ message: 'Not found' });
-    res.json(user);
-  },
-
-  async update(req, res) {
-    const id = Number(req.params.id);
-    const updated = await Users.updateProfile(id, req.body);
-    if (req.user) await Logs.write(req.user.id, 'user_update', JSON.stringify({ target: id }));
-    res.json(updated);
-  },
-
-  async remove(req, res) {
-    const id = Number(req.params.id);
-    await pool.query('DELETE FROM users WHERE id=$1', [id]); // small inline
-    if (req.user) await Logs.write(req.user.id, 'user_delete', JSON.stringify({ target: id }));
-    res.json({ success: true });
+    const result = await pool.query(
+      'INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, email, hashedPassword, 'user']
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Registration failed' });
   }
-};
+}
 
+// Логин
+async function loginUser(req, res) {
+  try {
+    const { email, password } = req.body;
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const user = result.rows[0];
+    if (!user) return res.status(400).json({ message: 'User not found' });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(400).json({ message: 'Invalid password' });
+
+    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    res.json({ token });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Login failed' });
+  }
+}
+
+async function getAllUsers(req, res) {
+  const result = await pool.query('SELECT id, name, email, role FROM users');
+  res.json(result.rows);
+}
+
+async function getUserById(req, res) {
+  const result = await pool.query('SELECT id, name, email, role FROM users WHERE id = $1', [req.params.id]);
+  res.json(result.rows[0]);
+}
+
+// Экспортируем функции
+module.exports = { registerUser, loginUser, getAllUsers, getUserById };
